@@ -4,7 +4,7 @@ const randomInt = (max = 9, min = 1) => Math.floor(Math.random() * max) + 1;
 export default {
     data() {
         return {
-            x: 3,
+            x: 4,
             y: 4,
             table: [],
         };
