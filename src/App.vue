@@ -111,6 +111,7 @@ td {
 <template>
     <button @click="reset">reset</button>
     <!-- {{ table }} -->
+    <br /><br /><br />
     <table>
         <tr v-for="(row, i) in table">
             <td
