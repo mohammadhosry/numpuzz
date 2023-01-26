@@ -60,6 +60,11 @@ export default {
         return r;
       }, []);
     },
+    clear() {
+      this.table.forEach((row) =>
+        row.forEach((cell) => (cell.selected = false))
+      );
+    },
   },
   computed: {
     won() {
@@ -135,7 +140,7 @@ td {
       <option :value="5">5</option>
       <option :value="6">6</option>
     </select>
-    <button @click="reset">reset</button>
+    <button @click="reset">Shuffle</button>
   </div>
   <br /><br /><br />
   <table>
@@ -157,4 +162,6 @@ td {
       </td>
     </tr>
   </table>
+  <br /><br />
+  <button @click="clear">Clear</button>
 </template>
