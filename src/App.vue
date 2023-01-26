@@ -81,7 +81,9 @@ export default {
             }, []);
         },
         clear() {
-            this.table.forEach((row) => row.forEach((cell) => (cell.selected = false)));
+            this.table.forEach((row: Cell[]) =>
+                row.forEach((cell) => (cell.selected = cell.off = false))
+            );
         },
         toggleSelected(cell) {
             !cell.off && (cell.selected = !cell.selected);
