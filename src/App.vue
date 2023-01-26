@@ -102,14 +102,16 @@ export default {
 </script>
 
 <style>
+* {
+  text-align: center !important;
+}
+
 .x {
   align-self: center;
-  text-align: center;
   margin-bottom: var(--spacing);
 }
 
 td {
-  text-align: center;
   cursor: pointer;
 }
 
