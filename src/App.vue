@@ -22,6 +22,7 @@ export default {
           this.table[i][j] = {
             num: randomInt(),
             selected: false,
+            off: false,
             ans: randomInt(this.x) > this.x / 2,
           };
         }
@@ -125,6 +126,10 @@ td {
   color: #000000;
   font-weight: bold;
 }
+
+.off {
+  color: var(--muted-color);
+}
 </style>
 
 <template>
@@ -149,8 +154,9 @@ td {
     <tr v-for="(row, i) in table">
       <td
         v-for="(cell, j) in row"
-        :class="{ selected: cell.selected }"
-        @click="table[i][j].selected = !cell.selected"
+        :class="{ selected: cell.selected, off: cell.off }"
+        @click="!cell.off && table[i][j].selected = !cell.selected"
+        @dblclick="!cell.selected && table[i][j].off = !cell.off"
       >
         {{ cell.num }}
       </td>
