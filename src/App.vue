@@ -66,6 +66,12 @@ export default {
         row.forEach((cell) => (cell.selected = false))
       );
     },
+    toggleSelected(cell) {
+      if (!cell.off) cell.selected = !cell.selected;
+    },
+    toggleOff(cell) {
+      if (!cell.selected) cell.off = !cell.off;
+    },
   },
   computed: {
     won() {
@@ -155,8 +161,8 @@ td {
       <td
         v-for="(cell, j) in row"
         :class="{ selected: cell.selected, off: cell.off }"
-        @click="!cell.off && table[i][j].selected = !cell.selected"
-        @dblclick="!cell.selected && table[i][j].off = !cell.off"
+        @click="toggleSelected(cell)"
+        @dblclick="toggleOff(cell)"
       >
         {{ cell.num }}
       </td>
