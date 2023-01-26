@@ -98,26 +98,26 @@ export default {
 
 <style>
 .x {
-    align-self: center;
-    text-align: center;
-    margin-bottom: var(--spacing);
+  align-self: center;
+  text-align: center;
+  margin-bottom: var(--spacing);
 }
 
 td {
-    text-align: center;
-    cursor: pointer;
+  text-align: center;
+  cursor: pointer;
 }
 
 .selected {
-    background-color: #9bc362;
-    color: #000000;
+  background-color: #9bc362;
+  color: #000000;
 }
 
-/* .done {
-     background-color: gold;
-     color: #000000;
-     font-weight: bold;
-} */
+.done {
+  background-color: gold;
+  color: #000000;
+  font-weight: bold;
+}
 </style>
 
 <template>
