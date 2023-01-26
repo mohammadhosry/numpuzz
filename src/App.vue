@@ -67,10 +67,12 @@ export default {
             this.rowsAns = this.calcRowsSum("ans");
             this.colsAns = this.calcColsSum("ans");
         },
-        calcRowsSum(key = "selected") {
-            return this.table.map((row) => row.reduce((a, b) => (a += b?.[key] && b?.num), 0));
+        calcRowsSum(key = "selected"): number[] {
+            return this.table.map((row: Cell[]) =>
+                row.reduce((a, b) => (a += b?.[key] && b?.num), 0)
+            );
         },
-        calcColsSum(key = "selected") {
+        calcColsSum(key = "selected"): number[] {
             return this.table.reduce((r: number[], a: Cell[]) => {
                 a.forEach((b, i) => {
                     r[i] ||= 0;
@@ -85,10 +87,10 @@ export default {
                 row.forEach((cell) => (cell.selected = cell.off = false))
             );
         },
-        toggleSelected(cell) {
+        toggleSelected(cell: Cell) {
             !cell.off && (cell.selected = !cell.selected);
         },
-        toggleOff(cell) {
+        toggleOff(cell: Cell) {
             !cell.selected && (cell.off = !cell.off);
         },
         rowUnselectedOff(i: number) {
@@ -107,18 +109,12 @@ export default {
                 this.colsSum.join("") == this.colsAns.join("")
             );
         },
-        rowsSum() {
+        rowsSum(): number[] {
             return this.calcRowsSum();
         },
-        colsSum() {
+        colsSum(): number[] {
             return this.calcColsSum();
         },
-        // rowsAns() {
-        //   return this.calcRowsSum("ans");
-        // },
-        // colsAns() {
-        //   return this.calcColsSum("ans");
-        // },
     },
     created() {
         this.reset();
@@ -176,7 +172,9 @@ td {
         </select>
         <button @click="reset">Shuffle</button>
     </div>
-    <br /><br /><br />
+    <br />
+    <br />
+    <br />
     <table>
         <tr v-for="(row, i) in table">
             <OnLongPress
@@ -202,6 +200,7 @@ td {
             </td>
         </tr>
     </table>
-    <br /><br />
+    <br />
+    <br />
     <button @click="clear">Clear</button>
 </template>
