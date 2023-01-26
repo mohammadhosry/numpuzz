@@ -1,4 +1,6 @@
 <script lang="ts">
+import { OnLongPress } from "@vueuse/components";
+
 interface Cell {
     num: number;
     selected: boolean;
@@ -18,6 +20,7 @@ interface State {
 const randomInt = (max = 9, min = 1): number => Math.floor(Math.random() * max) + min;
 
 export default {
+    components: { OnLongPress },
     data(): State {
         return {
             x: 4,
@@ -174,14 +177,15 @@ td {
     <br /><br /><br />
     <table>
         <tr v-for="(row, i) in table">
-            <td
+            <OnLongPress
+                as="td"
                 v-for="(cell, j) in row"
                 :class="{ selected: cell.selected, off: cell.off }"
                 @click="toggleSelected(cell)"
-                @dblclick="toggleOff(cell)"
+                @trigger="toggleOff(cell)"
             >
                 {{ cell.num }}
-            </td>
+            </OnLongPress>
             <td :class="{ done: rowsAns[i] == rowsSum[i] }" @click="rowUnselectedOff(i)">
                 {{ rowsAns[i] }} ({{ rowsSum[i] }})
             </td>
