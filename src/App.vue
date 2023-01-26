@@ -97,6 +97,12 @@ export default {
 </script>
 
 <style>
+.x {
+    align-self: center;
+    text-align: center;
+    margin-bottom: var(--spacing);
+}
+
 td {
     text-align: center;
     cursor: pointer;
@@ -122,7 +128,7 @@ td {
       <option :value="5">5</option>
       <option :value="6">6</option>
     </select>
-    X
+    <span class="x">X</span>
     <select v-model="y">
       <option :value="3">3</option>
       <option :value="4">4</option>
