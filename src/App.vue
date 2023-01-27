@@ -1,6 +1,7 @@
 <script lang="ts">
 import { OnLongPress } from "@vueuse/components";
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch } from "vue";
+import Confetti from "../node_modules/vue-confetti/src/confetti";
 
 type Cell = {
     num: number;
@@ -10,15 +11,6 @@ type Cell = {
 };
 
 type Row = Cell[];
-
-type State = {
-    x: number;
-    y: number;
-    table: Row[];
-    rowsAns: number[];
-    colsAns: number[];
-    xyOptions: number[];
-};
 
 const randomInt = (max = 9, min = 1): number => Math.floor(Math.random() * max) + min;
 
@@ -30,7 +22,9 @@ export default {
         const y = ref(4);
         const rowsAns = ref<number[]>([]);
         const colsAns = ref<number[]>([]);
-        const xyOptions = ref<number[]>([3, 4, 5, 6]);
+        const xyOptions = ref([3, 4, 5, 6]);
+
+        const confetti = new Confetti();
 
         const reset = () => {
             table.value = Array(y.value);
@@ -66,11 +60,13 @@ export default {
 
             rowsAns.value = calcRowsSum("ans");
             colsAns.value = calcColsSum("ans");
-        }
+        };
 
         const calcRowsSum = (key = "selected"): number[] => {
-            return table.value.map((row: Row) => row.reduce((a, b) => (a += b?.[key] && b?.num), 0));
-        }
+            return table.value.map((row: Row) =>
+                row.reduce((a, b) => (a += b?.[key] && b?.num), 0)
+            );
+        };
 
         const calcColsSum = (key = "selected"): number[] => {
             return table.value.reduce((r: number[], a: Row) => {
@@ -81,50 +77,44 @@ export default {
 
                 return r;
             }, []);
-        }
+        };
 
         const clear = () => {
             table.value.forEach((row: Row) =>
                 row.forEach((cell) => (cell.selected = cell.off = false))
             );
-        }
+        };
 
         const toggleSelected = (cell: Cell) => {
             !cell.off && (cell.selected = !cell.selected);
-        }
+        };
 
         const toggleOff = (cell: Cell) => {
             !cell.selected && (cell.off = !cell.off);
-        }
+        };
 
         const rowUnselectedOff = (i: number) => {
             table.value[i].forEach((cell: Cell) => !cell.selected && (cell.off = true));
-        }
+        };
 
         const colUnselectedOff = (j: number) => {
             for (let i = 0; i < y.value; i++) {
                 !table.value[i][j].selected && (table.value[i][j].off = true);
             }
-        }
+        };
 
         const rowsSum = computed(() => calcRowsSum());
 
         const colsSum = computed(() => calcColsSum());
 
-
-        const won = computed(() => {
-            return (
+        const won = computed(
+            () =>
                 rowsSum.value.join("") == rowsAns.value.join("") &&
                 colsSum.value.join("") == colsAns.value.join("")
-            );
-        });
+        );
 
         watch(won, (val) => {
-            if (val) {
-                // this.$confetti.start();
-            } else {
-                // this.$confetti.stop();
-            }
+            val ? confetti.start() : confetti.stop();
         });
 
         onMounted(() => {
@@ -132,18 +122,21 @@ export default {
         });
 
         return {
-            x, y, xyOptions, table,
-            reset,
-            toggleSelected,
-            toggleOff,
+            x,
+            y,
+            xyOptions,
+            table,
             rowsAns,
             rowsSum,
             colsAns,
             colsSum,
+            reset,
+            toggleSelected,
+            toggleOff,
             clear,
             rowUnselectedOff,
             colUnselectedOff,
-        }
+        };
     },
 };
 </script>
