@@ -101,20 +101,20 @@ export default {
         };
 
         const toggleSelected = (cell: Cell) => {
-            !cell.off && (cell.selected = !cell.selected);
+            if (!cell.off) cell.selected = !cell.selected;
         };
 
-        const toggleOff = (cell: Cell) => {
-            !cell.selected && (cell.off = !cell.off);
+        const setOrToggleOff = (cell: Cell, value?: boolean) => {
+            if (!cell.selected) cell.off = value ?? !cell.off;
         };
 
         const rowUnselectedOff = (i: number) => {
-            table.value[i].forEach((cell: Cell) => !cell.selected && (cell.off = true));
+            table.value[i].forEach((cell) => setOrToggleOff(cell, true));
         };
 
         const colUnselectedOff = (j: number) => {
             for (let i = 0; i < y.value; i++) {
-                !table.value[i][j].selected && (table.value[i][j].off = true);
+                setOrToggleOff(table.value[i][j], true);
             }
         };
 
@@ -178,7 +178,7 @@ export default {
             xyBestTime,
             reset,
             toggleSelected,
-            toggleOff,
+            setOrToggleOff,
             clear,
             rowUnselectedOff,
             colUnselectedOff,
@@ -246,7 +246,7 @@ ul {
                 v-for="cell in row"
                 :class="{ selected: cell.selected, off: cell.off }"
                 @click="toggleSelected(cell)"
-                @trigger="toggleOff(cell)"
+                @trigger="setOrToggleOff(cell)"
             >
                 {{ cell.num }}
             </OnLongPress>
