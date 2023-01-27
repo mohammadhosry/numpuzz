@@ -1,21 +1,23 @@
 <script lang="ts">
 import { OnLongPress } from "@vueuse/components";
 
-interface Cell {
+type Cell = {
     num: number;
     selected: boolean;
     ans: boolean;
     off: boolean;
-}
+};
 
-interface State {
+type Row = Cell[];
+
+type State = {
     x: number;
     y: number;
-    table: Cell[][];
+    table: Row[];
     rowsAns: number[];
     colsAns: number[];
     xyOptions: number[];
-}
+};
 
 const randomInt = (max = 9, min = 1): number => Math.floor(Math.random() * max) + min;
 
@@ -47,7 +49,7 @@ export default {
                     };
                 }
 
-                if (this.table[i].every((a) => !a.ans)) {
+                if (this.table[i].every((a: Cell) => !a.ans)) {
                     this.table[i][randomInt(this.x - 1, 0)].ans = true;
                 }
             }
@@ -68,12 +70,10 @@ export default {
             this.colsAns = this.calcColsSum("ans");
         },
         calcRowsSum(key = "selected"): number[] {
-            return this.table.map((row: Cell[]) =>
-                row.reduce((a, b) => (a += b?.[key] && b?.num), 0)
-            );
+            return this.table.map((row: Row) => row.reduce((a, b) => (a += b?.[key] && b?.num), 0));
         },
         calcColsSum(key = "selected"): number[] {
-            return this.table.reduce((r: number[], a: Cell[]) => {
+            return this.table.reduce((r: number[], a: Row) => {
                 a.forEach((b, i) => {
                     r[i] ||= 0;
                     r[i] += +b?.[key] && b.num;
@@ -83,7 +83,7 @@ export default {
             }, []);
         },
         clear() {
-            this.table.forEach((row: Cell[]) =>
+            this.table.forEach((row: Row) =>
                 row.forEach((cell) => (cell.selected = cell.off = false))
             );
         },
