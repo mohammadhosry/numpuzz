@@ -2,6 +2,8 @@
 import { OnLongPress } from "@vueuse/components";
 import { ref, computed, onMounted, watch } from "vue";
 import Confetti from "../node_modules/vue-confetti/src/confetti";
+import { useInterval } from "@vueuse/core";
+import { rand } from "@vueuse/shared";
 
 type Cell = {
     num: number;
@@ -12,8 +14,6 @@ type Cell = {
 
 type Row = Cell[];
 
-const randomInt = (max = 9, min = 1): number => Math.floor(Math.random() * max) + min;
-
 export default {
     components: { OnLongPress },
     setup() {
@@ -23,10 +23,19 @@ export default {
         const rowsAns = ref<number[]>([]);
         const colsAns = ref<number[]>([]);
         const xyOptions = ref([3, 4, 5, 6]);
+        const subSeconds = ref(0);
 
         const confetti = new Confetti();
+        const {
+            counter: seconds,
+            pause,
+            resume,
+        } = useInterval(1000, { controls: true, immediate: false });
 
         const reset = () => {
+            resume();
+
+            subSeconds.value = seconds.value;
             table.value = Array(y.value);
 
             for (let i = 0; i < y.value; i++) {
@@ -34,15 +43,15 @@ export default {
 
                 for (let j = 0; j < x.value; j++) {
                     table.value[i][j] = {
-                        num: randomInt(),
+                        num: rand(1, 9),
                         selected: false,
                         off: false,
-                        ans: randomInt(x.value) > x.value / 2,
+                        ans: rand(1, x.value) > x.value / 2,
                     };
                 }
 
                 if (table.value[i].every((a: Cell) => !a.ans)) {
-                    table.value[i][randomInt(x.value - 1, 0)].ans = true;
+                    table.value[i][rand(0, x.value - 1)].ans = true;
                 }
             }
 
@@ -54,7 +63,7 @@ export default {
                 }
 
                 if (!flag) {
-                    table.value[randomInt(y.value - 1, 0)][i].ans = true;
+                    table.value[rand(0, y.value - 1)][i].ans = true;
                 }
             }
 
@@ -107,6 +116,13 @@ export default {
 
         const colsSum = computed(() => calcColsSum());
 
+        const timer = computed(() => {
+            const s = `0${(seconds.value - subSeconds.value) % 60}`;
+            const m = `0${Math.floor((seconds.value - subSeconds.value) / 60)}`;
+
+            return `${m.slice(-2)}:${s.slice(-2)}`;
+        });
+
         const won = computed(
             () =>
                 rowsSum.value.join("") == rowsAns.value.join("") &&
@@ -114,7 +130,12 @@ export default {
         );
 
         watch(won, (val) => {
-            val ? confetti.start() : confetti.stop();
+            if (val) {
+                pause();
+                confetti.start();
+            } else {
+                confetti.stop();
+            }
         });
 
         onMounted(() => {
@@ -136,6 +157,7 @@ export default {
             clear,
             rowUnselectedOff,
             colUnselectedOff,
+            timer,
         };
     },
 };
@@ -184,6 +206,9 @@ td {
     </div>
     <br />
     <br />
+    <h4>
+        {{ timer }}
+    </h4>
     <br />
     <table>
         <tr v-for="(row, i) in table">
