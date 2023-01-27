@@ -18,8 +18,8 @@ export default {
     components: { OnLongPress },
     setup() {
         const table = ref<Row[]>([]);
-        const x = ref(4);
-        const y = ref(4);
+        const x = ref(parseInt(localStorage.getItem("x") || "4"));
+        const y = ref(parseInt(localStorage.getItem("y") || "4"));
         const rowsAns = ref<number[]>([]);
         const colsAns = ref<number[]>([]);
         const xyOptions = ref([3, 4, 5, 6]);
@@ -33,8 +33,13 @@ export default {
             resume,
         } = useInterval(1000, { controls: true, immediate: false });
 
-        const reset = () => {
+        const reset = (first = false) => {
             resume();
+
+            if (!first) {
+                localStorage.setItem("x", `${x.value}`);
+                localStorage.setItem("y", `${y.value}`);
+            }
 
             subSeconds.value = seconds.value;
             table.value = Array(y.value);
@@ -96,20 +101,20 @@ export default {
         };
 
         const toggleSelected = (cell: Cell) => {
-            !cell.off && (cell.selected = !cell.selected);
+            if (!cell.off) cell.selected = !cell.selected;
         };
 
-        const toggleOff = (cell: Cell) => {
-            !cell.selected && (cell.off = !cell.off);
+        const setOrToggleOff = (cell: Cell, value?: boolean) => {
+            if (!cell.selected) cell.off = value ?? !cell.off;
         };
 
         const rowUnselectedOff = (i: number) => {
-            table.value[i].forEach((cell: Cell) => !cell.selected && (cell.off = true));
+            table.value[i].forEach((cell) => setOrToggleOff(cell, true));
         };
 
         const colUnselectedOff = (j: number) => {
             for (let i = 0; i < y.value; i++) {
-                !table.value[i][j].selected && (table.value[i][j].off = true);
+                setOrToggleOff(table.value[i][j], true);
             }
         };
 
@@ -123,6 +128,10 @@ export default {
 
             return `${m.slice(-2)}:${s.slice(-2)}`;
         });
+
+        const xyBestTime = computed<undefined | string>(
+            () => bestTimes.value[`${table.value[0]?.length}x${table.value.length}`]
+        );
 
         const won = computed(
             () =>
@@ -153,7 +162,7 @@ export default {
         });
 
         onMounted(() => {
-            reset();
+            reset(true);
         });
 
         return {
@@ -166,10 +175,10 @@ export default {
             colsAns,
             colsSum,
             timer,
-            bestTimes,
+            xyBestTime,
             reset,
             toggleSelected,
-            toggleOff,
+            setOrToggleOff,
             clear,
             rowUnselectedOff,
             colUnselectedOff,
@@ -223,21 +232,21 @@ ul {
                 </select>
             </li>
             <li>
-                <button @click="reset">Shuffle</button>
+                <button @click="() => reset()">Shuffle</button>
             </li>
         </ul>
     </nav>
     <br />
-    <h6 v-if="bestTimes[`${x}x${y}`]">{{ x }} X {{ y }} record: {{ bestTimes[`${x}x${y}`] }}</h6>
+    <h6 v-if="xyBestTime">{{ table[0].length }} X {{ table.length }} record: {{ xyBestTime }}</h6>
     <h4>{{ timer }}</h4>
     <table>
         <tr v-for="(row, i) in table">
             <OnLongPress
                 as="td"
-                v-for="(cell, j) in row"
+                v-for="cell in row"
                 :class="{ selected: cell.selected, off: cell.off }"
                 @click="toggleSelected(cell)"
-                @trigger="toggleOff(cell)"
+                @trigger="setOrToggleOff(cell)"
             >
                 {{ cell.num }}
             </OnLongPress>
@@ -247,11 +256,11 @@ ul {
         </tr>
         <tr>
             <td
-                v-for="(num, j) in colsAns"
-                :class="{ done: num == colsSum[j] }"
+                v-for="(sum, j) in colsAns"
+                :class="{ done: sum == colsSum[j] }"
                 @click="colUnselectedOff(j)"
             >
-                {{ num }} ({{ colsSum[j] }})
+                {{ sum }} ({{ colsSum[j] }})
             </td>
         </tr>
     </table>
