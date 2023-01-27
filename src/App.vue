@@ -18,8 +18,8 @@ export default {
     components: { OnLongPress },
     setup() {
         const table = ref<Row[]>([]);
-        const x = ref(4);
-        const y = ref(4);
+        const x = ref(parseInt(localStorage.getItem("x") || "4"));
+        const y = ref(parseInt(localStorage.getItem("y") || "4"));
         const rowsAns = ref<number[]>([]);
         const colsAns = ref<number[]>([]);
         const xyOptions = ref([3, 4, 5, 6]);
@@ -33,8 +33,13 @@ export default {
             resume,
         } = useInterval(1000, { controls: true, immediate: false });
 
-        const reset = () => {
+        const reset = (first = false) => {
             resume();
+
+            if (!first) {
+                localStorage.setItem("x", `${x.value}`);
+                localStorage.setItem("y", `${y.value}`);
+            }
 
             subSeconds.value = seconds.value;
             table.value = Array(y.value);
@@ -153,7 +158,7 @@ export default {
         });
 
         onMounted(() => {
-            reset();
+            reset(true);
         });
 
         return {
@@ -223,7 +228,7 @@ ul {
                 </select>
             </li>
             <li>
-                <button @click="reset">Shuffle</button>
+                <button @click="() => reset()">Shuffle</button>
             </li>
         </ul>
     </nav>
