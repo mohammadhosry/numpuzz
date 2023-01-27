@@ -129,6 +129,10 @@ export default {
             return `${m.slice(-2)}:${s.slice(-2)}`;
         });
 
+        const xyBestTime = computed<undefined | string>(
+            () => bestTimes.value[`${table.value[0]?.length}x${table.value.length}`]
+        );
+
         const won = computed(
             () =>
                 rowsSum.value.join("") == rowsAns.value.join("") &&
@@ -171,7 +175,7 @@ export default {
             colsAns,
             colsSum,
             timer,
-            bestTimes,
+            xyBestTime,
             reset,
             toggleSelected,
             toggleOff,
@@ -233,13 +237,13 @@ ul {
         </ul>
     </nav>
     <br />
-    <h6 v-if="bestTimes[`${x}x${y}`]">{{ x }} X {{ y }} record: {{ bestTimes[`${x}x${y}`] }}</h6>
+    <h6 v-if="xyBestTime">{{ table[0].length }} X {{ table.length }} record: {{ xyBestTime }}</h6>
     <h4>{{ timer }}</h4>
     <table>
         <tr v-for="(row, i) in table">
             <OnLongPress
                 as="td"
-                v-for="(cell, j) in row"
+                v-for="cell in row"
                 :class="{ selected: cell.selected, off: cell.off }"
                 @click="toggleSelected(cell)"
                 @trigger="toggleOff(cell)"
@@ -252,11 +256,11 @@ ul {
         </tr>
         <tr>
             <td
-                v-for="(num, j) in colsAns"
-                :class="{ done: num == colsSum[j] }"
+                v-for="(sum, j) in colsAns"
+                :class="{ done: sum == colsSum[j] }"
                 @click="colUnselectedOff(j)"
             >
-                {{ num }} ({{ colsSum[j] }})
+                {{ sum }} ({{ colsSum[j] }})
             </td>
         </tr>
     </table>
