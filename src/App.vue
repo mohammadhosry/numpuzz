@@ -1,5 +1,9 @@
 <script lang="ts">
 import { OnLongPress } from "@vueuse/components";
+import { ref, computed, onMounted, watch } from "vue";
+import Confetti from "../node_modules/vue-confetti/src/confetti";
+import { useInterval } from "@vueuse/core";
+import { rand } from "@vueuse/shared";
 
 type Cell = {
     num: number;
@@ -10,70 +14,72 @@ type Cell = {
 
 type Row = Cell[];
 
-type State = {
-    x: number;
-    y: number;
-    table: Row[];
-    rowsAns: number[];
-    colsAns: number[];
-    xyOptions: number[];
-};
-
-const randomInt = (max = 9, min = 1): number => Math.floor(Math.random() * max) + min;
-
 export default {
     components: { OnLongPress },
-    data(): State {
-        return {
-            x: 4,
-            y: 4,
-            table: [],
-            rowsAns: [],
-            colsAns: [],
-            xyOptions: [3, 4, 5, 6],
-        };
-    },
-    methods: {
-        reset() {
-            this.table = Array(this.y);
+    setup() {
+        const table = ref<Row[]>([]);
+        const x = ref(4);
+        const y = ref(4);
+        const rowsAns = ref<number[]>([]);
+        const colsAns = ref<number[]>([]);
+        const xyOptions = ref([3, 4, 5, 6]);
+        const subSeconds = ref(0);
+        const bestTimes = ref<any>(JSON.parse(localStorage.getItem("bestTimes") || "{}"));
 
-            for (let i = 0; i < this.y; i++) {
-                this.table[i] = Array(this.x);
+        const confetti = new Confetti();
+        const {
+            counter: seconds,
+            pause,
+            resume,
+        } = useInterval(1000, { controls: true, immediate: false });
 
-                for (let j = 0; j < this.x; j++) {
-                    this.table[i][j] = {
-                        num: randomInt(),
+        const reset = () => {
+            resume();
+
+            subSeconds.value = seconds.value;
+            table.value = Array(y.value);
+
+            for (let i = 0; i < y.value; i++) {
+                table.value[i] = Array(x.value);
+
+                for (let j = 0; j < x.value; j++) {
+                    table.value[i][j] = {
+                        num: rand(1, 9),
                         selected: false,
                         off: false,
-                        ans: randomInt(this.x) > this.x / 2,
+                        ans: rand(1, x.value) > x.value / 2,
                     };
                 }
 
-                if (this.table[i].every((a: Cell) => !a.ans)) {
-                    this.table[i][randomInt(this.x - 1, 0)].ans = true;
+                if (table.value[i].every((a: Cell) => !a.ans)) {
+                    table.value[i][rand(0, x.value - 1)].ans = true;
                 }
             }
 
-            for (let i = 0; i < this.x; i++) {
+            for (let i = 0; i < x.value; i++) {
                 let flag = false;
 
-                for (let j = 0; j < this.y; j++) {
-                    flag ||= this.table[j][i].ans;
+                for (let j = 0; j < y.value; j++) {
+                    flag ||= table.value[j][i].ans;
                 }
 
                 if (!flag) {
-                    this.table[randomInt(this.y - 1, 0)][i].ans = true;
+                    table.value[rand(0, y.value - 1)][i].ans = true;
                 }
             }
 
-            this.rowsAns = this.calcRowsSum("ans");
-            this.colsAns = this.calcColsSum("ans");
-        },
-        calcRowsSum(key = "selected"): number[] {
-            return this.table.map((row: Row) => row.reduce((a, b) => (a += b?.[key] && b?.num), 0));
-        },
-        calcColsSum(key = "selected"): number[] {
-            return this.table.reduce((r: number[], a: Row) => {
+            rowsAns.value = calcRowsSum("ans");
+            colsAns.value = calcColsSum("ans");
+        };
+
+        const calcRowsSum = (key = "selected"): number[] => {
+            return table.value.map((row: Row) =>
+                row.reduce((a, b) => (a += b?.[key] && b?.num), 0)
+            );
+        };
+
+        const calcColsSum = (key = "selected"): number[] => {
+            return table.value.reduce((r: number[], a: Row) => {
                 a.forEach((b, i) => {
                     r[i] ||= 0;
                     r[i] += +b?.[key] && b.num;
@@ -81,52 +87,93 @@ export default {
 
                 return r;
             }, []);
-        },
-        clear() {
-            this.table.forEach((row: Row) =>
+        };
+
+        const clear = () => {
+            table.value.forEach((row: Row) =>
                 row.forEach((cell) => (cell.selected = cell.off = false))
             );
-        },
-        toggleSelected(cell: Cell) {
+        };
+
+        const toggleSelected = (cell: Cell) => {
             !cell.off && (cell.selected = !cell.selected);
-        },
-        toggleOff(cell: Cell) {
+        };
+
+        const toggleOff = (cell: Cell) => {
             !cell.selected && (cell.off = !cell.off);
-        },
-        rowUnselectedOff(i: number) {
-            this.table[i].forEach((cell: Cell) => !cell.selected && (cell.off = true));
-        },
-        colUnselectedOff(j: number) {
-            for (let i = 0; i < this.y; i++) {
-                !this.table[i][j].selected && (this.table[i][j].off = true);
+        };
+
+        const rowUnselectedOff = (i: number) => {
+            table.value[i].forEach((cell: Cell) => !cell.selected && (cell.off = true));
+        };
+
+        const colUnselectedOff = (j: number) => {
+            for (let i = 0; i < y.value; i++) {
+                !table.value[i][j].selected && (table.value[i][j].off = true);
             }
-        },
-    },
-    computed: {
-        won() {
-            return (
-                this.rowsSum.join("") == this.rowsAns.join("") &&
-                this.colsSum.join("") == this.colsAns.join("")
-            );
-        },
-        rowsSum(): number[] {
-            return this.calcRowsSum();
-        },
-        colsSum(): number[] {
-            return this.calcColsSum();
-        },
-    },
-    created() {
-        this.reset();
-    },
-    watch: {
-        won(val) {
-            if (val) {
-                this.$confetti.start();
-            } else {
-                this.$confetti.stop();
+        };
+
+        const rowsSum = computed(() => calcRowsSum());
+
+        const colsSum = computed(() => calcColsSum());
+
+        const timer = computed(() => {
+            const s = `0${(seconds.value - subSeconds.value) % 60}`;
+            const m = `0${Math.floor((seconds.value - subSeconds.value) / 60)}`;
+
+            return `${m.slice(-2)}:${s.slice(-2)}`;
+        });
+
+        const won = computed(
+            () =>
+                rowsSum.value.join("") == rowsAns.value.join("") &&
+                colsSum.value.join("") == colsAns.value.join("")
+        );
+
+        const handleWinnig = () => {
+            pause();
+
+            if (
+                !bestTimes.value[`${x.value}x${y.value}`] ||
+                timer.value < bestTimes.value[`${x.value}x${y.value}`]
+            ) {
+                bestTimes.value[`${x.value}x${y.value}`] = timer.value;
+                localStorage.setItem("bestTimes", JSON.stringify(bestTimes.value));
             }
-        },
+
+            confetti.start();
+        };
+
+        const handleLosing = () => {
+            confetti.stop();
+        };
+
+        watch(won, (val) => {
+            val ? handleWinnig() : handleLosing();
+        });
+
+        onMounted(() => {
+            reset();
+        });
+
+        return {
+            x,
+            y,
+            xyOptions,
+            table,
+            rowsAns,
+            rowsSum,
+            colsAns,
+            colsSum,
+            timer,
+            bestTimes,
+            reset,
+            toggleSelected,
+            toggleOff,
+            clear,
+            rowUnselectedOff,
+            colUnselectedOff,
+        };
     },
 };
 </script>
@@ -134,11 +181,6 @@ export default {
 <style>
 * {
     text-align: center !important;
-}
-
-.x {
-    align-self: center;
-    margin-bottom: var(--spacing);
 }
 
 td {
@@ -159,22 +201,35 @@ td {
 .off {
     color: var(--muted-color);
 }
+
+ul {
+    width: 100%;
+    justify-content: space-between;
+}
 </style>
 
 <template>
-    <div class="grid">
-        <select v-model="x">
-            <option v-for="opt in xyOptions" :value="opt">{{ opt }}</option>
-        </select>
-        <span class="x">X</span>
-        <select v-model="y">
-            <option v-for="opt in xyOptions" :value="opt">{{ opt }}</option>
-        </select>
-        <button @click="reset">Shuffle</button>
-    </div>
+    <nav>
+        <ul>
+            <li>
+                <select v-model="x">
+                    <option v-for="opt in xyOptions" :value="opt">{{ opt }}</option>
+                </select>
+            </li>
+            <li>X</li>
+            <li>
+                <select v-model="y">
+                    <option v-for="opt in xyOptions" :value="opt">{{ opt }}</option>
+                </select>
+            </li>
+            <li>
+                <button @click="reset">Shuffle</button>
+            </li>
+        </ul>
+    </nav>
     <br />
-    <br />
-    <br />
+    <h6 v-if="bestTimes[`${x}x${y}`]">{{ x }} X {{ y }} record: {{ bestTimes[`${x}x${y}`] }}</h6>
+    <h4>{{ timer }}</h4>
     <table>
         <tr v-for="(row, i) in table">
             <OnLongPress
