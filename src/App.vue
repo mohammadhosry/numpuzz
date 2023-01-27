@@ -1,5 +1,6 @@
 <script lang="ts">
 import { OnLongPress } from "@vueuse/components";
+import { ref, computed, onMounted, watch } from 'vue';
 
 type Cell = {
     num: number;
@@ -23,57 +24,56 @@ const randomInt = (max = 9, min = 1): number => Math.floor(Math.random() * max) 
 
 export default {
     components: { OnLongPress },
-    data(): State {
-        return {
-            x: 4,
-            y: 4,
-            table: [],
-            rowsAns: [],
-            colsAns: [],
-            xyOptions: [3, 4, 5, 6],
-        };
-    },
-    methods: {
-        reset() {
-            this.table = Array(this.y);
+    setup() {
+        const table = ref<Row[]>([]);
+        const x = ref(4);
+        const y = ref(4);
+        const rowsAns = ref<number[]>([]);
+        const colsAns = ref<number[]>([]);
+        const xyOptions = ref<number[]>([3, 4, 5, 6]);
 
-            for (let i = 0; i < this.y; i++) {
-                this.table[i] = Array(this.x);
+        const reset = () => {
+            table.value = Array(y.value);
 
-                for (let j = 0; j < this.x; j++) {
-                    this.table[i][j] = {
+            for (let i = 0; i < y.value; i++) {
+                table.value[i] = Array(x.value);
+
+                for (let j = 0; j < x.value; j++) {
+                    table.value[i][j] = {
                         num: randomInt(),
                         selected: false,
                         off: false,
-                        ans: randomInt(this.x) > this.x / 2,
+                        ans: randomInt(x.value) > x.value / 2,
                     };
                 }
 
-                if (this.table[i].every((a: Cell) => !a.ans)) {
-                    this.table[i][randomInt(this.x - 1, 0)].ans = true;
+                if (table.value[i].every((a: Cell) => !a.ans)) {
+                    table.value[i][randomInt(x.value - 1, 0)].ans = true;
                 }
             }
 
-            for (let i = 0; i < this.x; i++) {
+            for (let i = 0; i < x.value; i++) {
                 let flag = false;
 
-                for (let j = 0; j < this.y; j++) {
-                    flag ||= this.table[j][i].ans;
+                for (let j = 0; j < y.value; j++) {
+                    flag ||= table.value[j][i].ans;
                 }
 
                 if (!flag) {
-                    this.table[randomInt(this.y - 1, 0)][i].ans = true;
+                    table.value[randomInt(y.value - 1, 0)][i].ans = true;
                 }
             }
 
-            this.rowsAns = this.calcRowsSum("ans");
-            this.colsAns = this.calcColsSum("ans");
-        },
-        calcRowsSum(key = "selected"): number[] {
-            return this.table.map((row: Row) => row.reduce((a, b) => (a += b?.[key] && b?.num), 0));
-        },
-        calcColsSum(key = "selected"): number[] {
-            return this.table.reduce((r: number[], a: Row) => {
+            rowsAns.value = calcRowsSum("ans");
+            colsAns.value = calcColsSum("ans");
+        }
+
+        const calcRowsSum = (key = "selected"): number[] => {
+            return table.value.map((row: Row) => row.reduce((a, b) => (a += b?.[key] && b?.num), 0));
+        }
+
+        const calcColsSum = (key = "selected"): number[] => {
+            return table.value.reduce((r: number[], a: Row) => {
                 a.forEach((b, i) => {
                     r[i] ||= 0;
                     r[i] += +b?.[key] && b.num;
@@ -81,52 +81,69 @@ export default {
 
                 return r;
             }, []);
-        },
-        clear() {
-            this.table.forEach((row: Row) =>
+        }
+
+        const clear = () => {
+            table.value.forEach((row: Row) =>
                 row.forEach((cell) => (cell.selected = cell.off = false))
             );
-        },
-        toggleSelected(cell: Cell) {
+        }
+
+        const toggleSelected = (cell: Cell) => {
             !cell.off && (cell.selected = !cell.selected);
-        },
-        toggleOff(cell: Cell) {
+        }
+
+        const toggleOff = (cell: Cell) => {
             !cell.selected && (cell.off = !cell.off);
-        },
-        rowUnselectedOff(i: number) {
-            this.table[i].forEach((cell: Cell) => !cell.selected && (cell.off = true));
-        },
-        colUnselectedOff(j: number) {
-            for (let i = 0; i < this.y; i++) {
-                !this.table[i][j].selected && (this.table[i][j].off = true);
+        }
+
+        const rowUnselectedOff = (i: number) => {
+            table.value[i].forEach((cell: Cell) => !cell.selected && (cell.off = true));
+        }
+
+        const colUnselectedOff = (j: number) => {
+            for (let i = 0; i < y.value; i++) {
+                !table.value[i][j].selected && (table.value[i][j].off = true);
             }
-        },
-    },
-    computed: {
-        won() {
+        }
+
+        const rowsSum = computed(() => calcRowsSum());
+
+        const colsSum = computed(() => calcColsSum());
+
+
+        const won = computed(() => {
             return (
-                this.rowsSum.join("") == this.rowsAns.join("") &&
-                this.colsSum.join("") == this.colsAns.join("")
+                rowsSum.value.join("") == rowsAns.value.join("") &&
+                colsSum.value.join("") == colsAns.value.join("")
             );
-        },
-        rowsSum(): number[] {
-            return this.calcRowsSum();
-        },
-        colsSum(): number[] {
-            return this.calcColsSum();
-        },
-    },
-    created() {
-        this.reset();
-    },
-    watch: {
-        won(val) {
+        });
+
+        watch(won, (val) => {
             if (val) {
-                this.$confetti.start();
+                // this.$confetti.start();
             } else {
-                this.$confetti.stop();
+                // this.$confetti.stop();
             }
-        },
+        });
+
+        onMounted(() => {
+            reset();
+        });
+
+        return {
+            x, y, xyOptions, table,
+            reset,
+            toggleSelected,
+            toggleOff,
+            rowsAns,
+            rowsSum,
+            colsAns,
+            colsSum,
+            clear,
+            rowUnselectedOff,
+            colUnselectedOff,
+        }
     },
 };
 </script>
