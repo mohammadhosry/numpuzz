@@ -24,6 +24,7 @@ export default {
         const colsAns = ref<number[]>([]);
         const xyOptions = ref([3, 4, 5, 6]);
         const subSeconds = ref(0);
+        const bestTimes = ref<any>(JSON.parse(localStorage.getItem("bestTimes") || "{}"));
 
         const confetti = new Confetti();
         const {
@@ -129,13 +130,26 @@ export default {
                 colsSum.value.join("") == colsAns.value.join("")
         );
 
-        watch(won, (val) => {
-            if (val) {
-                pause();
-                confetti.start();
-            } else {
-                confetti.stop();
+        const handleWinnig = () => {
+            pause();
+
+            if (
+                !bestTimes.value[`${x.value}x${y.value}`] ||
+                timer.value < bestTimes.value[`${x.value}x${y.value}`]
+            ) {
+                bestTimes.value[`${x.value}x${y.value}`] = timer.value;
+                localStorage.setItem("bestTimes", JSON.stringify(bestTimes.value));
             }
+
+            confetti.start();
+        };
+
+        const handleLosing = () => {
+            confetti.stop();
+        };
+
+        watch(won, (val) => {
+            val ? handleWinnig() : handleLosing();
         });
 
         onMounted(() => {
@@ -151,13 +165,14 @@ export default {
             rowsSum,
             colsAns,
             colsSum,
+            timer,
+            bestTimes,
             reset,
             toggleSelected,
             toggleOff,
             clear,
             rowUnselectedOff,
             colUnselectedOff,
-            timer,
         };
     },
 };
@@ -213,9 +228,8 @@ ul {
         </ul>
     </nav>
     <br />
-    <h4>
-        {{ timer }}
-    </h4>
+    <h6 v-if="bestTimes[`${x}x${y}`]">{{ x }} X {{ y }} record: {{ bestTimes[`${x}x${y}`] }}</h6>
+    <h4>{{ timer }}</h4>
     <table>
         <tr v-for="(row, i) in table">
             <OnLongPress
