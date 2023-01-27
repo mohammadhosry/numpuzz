@@ -168,11 +168,6 @@ export default {
     text-align: center !important;
 }
 
-.x {
-    align-self: center;
-    margin-bottom: var(--spacing);
-}
-
 td {
     cursor: pointer;
 }
@@ -191,25 +186,36 @@ td {
 .off {
     color: var(--muted-color);
 }
+
+ul {
+    width: 100%;
+    justify-content: space-between;
+}
 </style>
 
 <template>
-    <div class="grid">
-        <select v-model="x">
-            <option v-for="opt in xyOptions" :value="opt">{{ opt }}</option>
-        </select>
-        <span class="x">X</span>
-        <select v-model="y">
-            <option v-for="opt in xyOptions" :value="opt">{{ opt }}</option>
-        </select>
-        <button @click="reset">Shuffle</button>
-    </div>
-    <br />
+    <nav>
+        <ul>
+            <li>
+                <select v-model="x">
+                    <option v-for="opt in xyOptions" :value="opt">{{ opt }}</option>
+                </select>
+            </li>
+            <li>X</li>
+            <li>
+                <select v-model="y">
+                    <option v-for="opt in xyOptions" :value="opt">{{ opt }}</option>
+                </select>
+            </li>
+            <li>
+                <button @click="reset">Shuffle</button>
+            </li>
+        </ul>
+    </nav>
     <br />
     <h4>
         {{ timer }}
     </h4>
-    <br />
     <table>
         <tr v-for="(row, i) in table">
             <OnLongPress
