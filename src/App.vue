@@ -2,7 +2,7 @@
 import { OnLongPress } from "@vueuse/components";
 import { ref, computed, onMounted, watch } from "vue";
 import Confetti from "../node_modules/vue-confetti/src/confetti";
-import { useInterval } from "@vueuse/core";
+import { useInterval, useLocalStorage } from "@vueuse/core";
 import { rand } from "@vueuse/shared";
 import useAudio from "./composables/useAudio";
 import longPress from "./assets/long-press.wav";
@@ -24,14 +24,14 @@ export default {
         const winPlay = useAudio(win);
 
         const table = ref<Row[]>([]);
-        const x = ref(parseInt(localStorage.getItem("x") || "4"));
-        const y = ref(parseInt(localStorage.getItem("y") || "4"));
+        const x = useLocalStorage("x", 4);
+        const y = useLocalStorage("y", 4);
         const rowsAns = ref<number[]>([]);
         const colsAns = ref<number[]>([]);
         const xyOptions = ref([3, 4, 5, 6]);
         const subSeconds = ref(0);
-        const bestTimes = ref<any>(JSON.parse(localStorage.getItem("bestTimes") || "{}"));
-        const sfx = ref(localStorage.getItem("sfx") === "true");
+        const bestTimes = useLocalStorage<any>("bestTimes", {});
+        const sfx = useLocalStorage("sfx", false);
 
         const confetti = new Confetti();
         const {
@@ -42,11 +42,6 @@ export default {
 
         const reset = (first = false) => {
             resume();
-
-            if (!first) {
-                localStorage.setItem("x", `${x.value}`);
-                localStorage.setItem("y", `${y.value}`);
-            }
 
             subSeconds.value = seconds.value;
             table.value = Array(y.value);
@@ -152,10 +147,10 @@ export default {
 
             if (!bestTimes.value[xyKey.value] || timer.value < bestTimes.value[xyKey.value]) {
                 bestTimes.value[xyKey.value] = timer.value;
-                localStorage.setItem("bestTimes", JSON.stringify(bestTimes.value));
             }
 
             confetti.start();
+
             sfx.value && winPlay();
         };
 
@@ -165,10 +160,6 @@ export default {
 
         watch(won, (val) => {
             val ? handleWinnig() : handleLosing();
-        });
-
-        watch(sfx, (val) => {
-            localStorage.setItem("sfx", `${val}`);
         });
 
         onMounted(() => {
@@ -226,6 +217,10 @@ ul {
     width: 100%;
     justify-content: space-between;
 }
+
+details * {
+    text-align: initial !important;
+}
 </style>
 
 <template>
@@ -279,10 +274,13 @@ ul {
     <br />
     <button @click="clear">Clear</button>
     <br />
-    <fieldset>
-        <label>
-            <input v-model="sfx" type="checkbox" name="switch" role="switch" />
-            SFX
-        </label>
-    </fieldset>
+    <details>
+        <summary>Settings</summary>
+        <fieldset>
+            <label>
+                <input v-model="sfx" type="checkbox" name="switch" role="switch" />
+                SFX
+            </label>
+        </fieldset>
+    </details>
 </template>
