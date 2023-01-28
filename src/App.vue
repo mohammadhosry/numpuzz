@@ -4,6 +4,9 @@ import { ref, computed, onMounted, watch } from "vue";
 import Confetti from "../node_modules/vue-confetti/src/confetti";
 import { useInterval } from "@vueuse/core";
 import { rand } from "@vueuse/shared";
+import useAudio from "./composables/useAudio";
+import longPress from "./assets/long-press.wav";
+import win from "./assets/win.wav";
 
 type Cell = {
     num: number;
@@ -17,6 +20,9 @@ type Row = Cell[];
 export default {
     components: { OnLongPress },
     setup() {
+        const longPressPlay = useAudio(longPress);
+        const winPlay = useAudio(win);
+
         const table = ref<Row[]>([]);
         const x = ref(parseInt(localStorage.getItem("x") || "4"));
         const y = ref(parseInt(localStorage.getItem("y") || "4"));
@@ -25,6 +31,7 @@ export default {
         const xyOptions = ref([3, 4, 5, 6]);
         const subSeconds = ref(0);
         const bestTimes = ref<any>(JSON.parse(localStorage.getItem("bestTimes") || "{}"));
+        const sfx = ref(localStorage.getItem("sfx") === "true");
 
         const confetti = new Confetti();
         const {
@@ -106,6 +113,7 @@ export default {
 
         const setOrToggleOff = (cell: Cell, value?: boolean) => {
             if (!cell.selected) cell.off = value ?? !cell.off;
+            sfx.value && longPressPlay();
         };
 
         const rowUnselectedOff = (i: number) => {
@@ -142,15 +150,13 @@ export default {
         const handleWinnig = () => {
             pause();
 
-            if (
-                !bestTimes.value[xyKey.value] ||
-                timer.value < bestTimes.value[xyKey.value]
-            ) {
+            if (!bestTimes.value[xyKey.value] || timer.value < bestTimes.value[xyKey.value]) {
                 bestTimes.value[xyKey.value] = timer.value;
                 localStorage.setItem("bestTimes", JSON.stringify(bestTimes.value));
             }
 
             confetti.start();
+            sfx.value && winPlay();
         };
 
         const handleLosing = () => {
@@ -159,6 +165,10 @@ export default {
 
         watch(won, (val) => {
             val ? handleWinnig() : handleLosing();
+        });
+
+        watch(sfx, (val) => {
+            localStorage.setItem("sfx", `${val}`);
         });
 
         onMounted(() => {
@@ -176,6 +186,7 @@ export default {
             colsSum,
             timer,
             xyBestTime,
+            sfx,
             reset,
             toggleSelected,
             setOrToggleOff,
@@ -267,4 +278,11 @@ ul {
     <br />
     <br />
     <button @click="clear">Clear</button>
+    <br />
+    <fieldset>
+        <label>
+            <input v-model="sfx" type="checkbox" name="switch" role="switch" />
+            SFX
+        </label>
+    </fieldset>
 </template>
