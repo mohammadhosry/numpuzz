@@ -2,8 +2,11 @@
 import { OnLongPress } from "@vueuse/components";
 import { ref, computed, onMounted, watch } from "vue";
 import Confetti from "../node_modules/vue-confetti/src/confetti";
-import { useInterval } from "@vueuse/core";
+import { useInterval, useLocalStorage } from "@vueuse/core";
 import { rand } from "@vueuse/shared";
+import useAudio from "./composables/useAudio";
+import longPress from "./assets/long-press.wav";
+import win from "./assets/win.wav";
 
 type Cell = {
     num: number;
@@ -17,14 +20,18 @@ type Row = Cell[];
 export default {
     components: { OnLongPress },
     setup() {
+        const longPressPlay = useAudio(longPress);
+        const winPlay = useAudio(win);
+
         const table = ref<Row[]>([]);
-        const x = ref(parseInt(localStorage.getItem("x") || "4"));
-        const y = ref(parseInt(localStorage.getItem("y") || "4"));
+        const x = useLocalStorage("x", 4);
+        const y = useLocalStorage("y", 4);
         const rowsAns = ref<number[]>([]);
         const colsAns = ref<number[]>([]);
         const xyOptions = ref([3, 4, 5, 6]);
         const subSeconds = ref(0);
-        const bestTimes = ref<any>(JSON.parse(localStorage.getItem("bestTimes") || "{}"));
+        const bestTimes = useLocalStorage<any>("bestTimes", {});
+        const sfx = useLocalStorage("sfx", false);
 
         const confetti = new Confetti();
         const {
@@ -35,11 +42,6 @@ export default {
 
         const reset = (first = false) => {
             resume();
-
-            if (!first) {
-                localStorage.setItem("x", `${x.value}`);
-                localStorage.setItem("y", `${y.value}`);
-            }
 
             subSeconds.value = seconds.value;
             table.value = Array(y.value);
@@ -106,6 +108,7 @@ export default {
 
         const setOrToggleOff = (cell: Cell, value?: boolean) => {
             if (!cell.selected) cell.off = value ?? !cell.off;
+            sfx.value && longPressPlay();
         };
 
         const rowUnselectedOff = (i: number) => {
@@ -129,9 +132,9 @@ export default {
             return `${m.slice(-2)}:${s.slice(-2)}`;
         });
 
-        const xyBestTime = computed<undefined | string>(
-            () => bestTimes.value[`${table.value[0]?.length}x${table.value.length}`]
-        );
+        const xyKey = computed(() => `${table.value[0]?.length}x${table.value.length}`);
+
+        const xyBestTime = computed<undefined | string>(() => bestTimes.value[xyKey.value]);
 
         const won = computed(
             () =>
@@ -142,15 +145,13 @@ export default {
         const handleWinnig = () => {
             pause();
 
-            if (
-                !bestTimes.value[`${x.value}x${y.value}`] ||
-                timer.value < bestTimes.value[`${x.value}x${y.value}`]
-            ) {
-                bestTimes.value[`${x.value}x${y.value}`] = timer.value;
-                localStorage.setItem("bestTimes", JSON.stringify(bestTimes.value));
+            if (!bestTimes.value[xyKey.value] || timer.value < bestTimes.value[xyKey.value]) {
+                bestTimes.value[xyKey.value] = timer.value;
             }
 
             confetti.start();
+
+            sfx.value && winPlay();
         };
 
         const handleLosing = () => {
@@ -176,6 +177,7 @@ export default {
             colsSum,
             timer,
             xyBestTime,
+            sfx,
             reset,
             toggleSelected,
             setOrToggleOff,
@@ -214,6 +216,10 @@ td {
 ul {
     width: 100%;
     justify-content: space-between;
+}
+
+details * {
+    text-align: initial !important;
 }
 </style>
 
@@ -267,4 +273,14 @@ ul {
     <br />
     <br />
     <button @click="clear">Clear</button>
+    <br />
+    <details>
+        <summary>Settings</summary>
+        <fieldset>
+            <label>
+                <input v-model="sfx" type="checkbox" name="switch" role="switch" />
+                SFX
+            </label>
+        </fieldset>
+    </details>
 </template>
