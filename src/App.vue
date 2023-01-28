@@ -129,9 +129,9 @@ export default {
             return `${m.slice(-2)}:${s.slice(-2)}`;
         });
 
-        const xyBestTime = computed<undefined | string>(
-            () => bestTimes.value[`${table.value[0]?.length}x${table.value.length}`]
-        );
+        const xyKey = computed(() => `${table.value[0]?.length}x${table.value.length}`);
+
+        const xyBestTime = computed<undefined | string>(() => bestTimes.value[xyKey.value]);
 
         const won = computed(
             () =>
@@ -143,10 +143,10 @@ export default {
             pause();
 
             if (
-                !bestTimes.value[`${x.value}x${y.value}`] ||
-                timer.value < bestTimes.value[`${x.value}x${y.value}`]
+                !bestTimes.value[xyKey.value] ||
+                timer.value < bestTimes.value[xyKey.value]
             ) {
-                bestTimes.value[`${x.value}x${y.value}`] = timer.value;
+                bestTimes.value[xyKey.value] = timer.value;
                 localStorage.setItem("bestTimes", JSON.stringify(bestTimes.value));
             }
 
