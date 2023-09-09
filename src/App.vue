@@ -35,13 +35,13 @@ export default {
             counter: seconds,
             pause,
             resume,
-            reset: resetCounter,
+            reset: resetSeconds,
         } = useInterval(1000, { controls: true, immediate: false });
 
         const reset = (first = false) => {
             resume();
 
-            resetCounter();
+            resetSeconds();
             table.value = Array(y.value);
 
             for (let i = 0; i < y.value; i++) {
