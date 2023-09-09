@@ -29,7 +29,6 @@ export default {
         const rowsAns = ref<number[]>([]);
         const colsAns = ref<number[]>([]);
         const xyOptions = ref([3, 4, 5, 6]);
-        const subSeconds = ref(0);
         const bestTimes = useLocalStorage<any>("bestTimes", {});
         const sfx = useLocalStorage("sfx", false);
 
@@ -38,12 +37,13 @@ export default {
             counter: seconds,
             pause,
             resume,
+            reset: resetCounter,
         } = useInterval(1000, { controls: true, immediate: false });
 
         const reset = (first = false) => {
             resume();
 
-            subSeconds.value = seconds.value;
+            resetCounter();
             table.value = Array(y.value);
 
             for (let i = 0; i < y.value; i++) {
@@ -126,8 +126,8 @@ export default {
         const colsSum = computed(() => calcColsSum());
 
         const timer = computed(() => {
-            const s = `0${(seconds.value - subSeconds.value) % 60}`;
-            const m = `0${Math.floor((seconds.value - subSeconds.value) / 60)}`;
+            const s = `0${seconds.value % 60}`;
+            const m = `0${Math.floor(seconds.value / 60)}`;
 
             return `${m.slice(-2)}:${s.slice(-2)}`;
         });
