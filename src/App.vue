@@ -5,8 +5,6 @@ import Confetti from "../node_modules/vue-confetti/src/confetti";
 import { useInterval, useLocalStorage } from "@vueuse/core";
 import { rand } from "@vueuse/shared";
 import useAudio from "./composables/useAudio";
-import longPress from "./assets/long-press.wav";
-import win from "./assets/win.wav";
 
 type Cell = {
     num: number;
@@ -20,8 +18,8 @@ type Row = Cell[];
 export default {
     components: { OnLongPress },
     setup() {
-        const longPressPlay = useAudio(longPress);
-        const winPlay = useAudio(win);
+        const longPressPlay = useAudio("/sfx/long-press.wav");
+        const winPlay = useAudio("/sfx/win.wav");
 
         const table = ref<Row[]>([]);
         const x = useLocalStorage("x", 4);
@@ -29,7 +27,6 @@ export default {
         const rowsAns = ref<number[]>([]);
         const colsAns = ref<number[]>([]);
         const xyOptions = ref([3, 4, 5, 6]);
-        const subSeconds = ref(0);
         const bestTimes = useLocalStorage<any>("bestTimes", {});
         const sfx = useLocalStorage("sfx", false);
 
@@ -38,12 +35,13 @@ export default {
             counter: seconds,
             pause,
             resume,
+            reset: resetSeconds,
         } = useInterval(1000, { controls: true, immediate: false });
 
         const reset = (first = false) => {
             resume();
 
-            subSeconds.value = seconds.value;
+            resetSeconds();
             table.value = Array(y.value);
 
             for (let i = 0; i < y.value; i++) {
@@ -126,8 +124,8 @@ export default {
         const colsSum = computed(() => calcColsSum());
 
         const timer = computed(() => {
-            const s = `0${(seconds.value - subSeconds.value) % 60}`;
-            const m = `0${Math.floor((seconds.value - subSeconds.value) / 60)}`;
+            const s = `0${seconds.value % 60}`;
+            const m = `0${Math.floor(seconds.value / 60)}`;
 
             return `${m.slice(-2)}:${s.slice(-2)}`;
         });
