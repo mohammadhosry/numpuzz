@@ -5,8 +5,6 @@ import Confetti from "../node_modules/vue-confetti/src/confetti";
 import { useInterval, useLocalStorage } from "@vueuse/core";
 import { rand } from "@vueuse/shared";
 import useAudio from "./composables/useAudio";
-import longPress from "./assets/long-press.wav";
-import win from "./assets/win.wav";
 
 type Cell = {
     num: number;
@@ -20,8 +18,8 @@ type Row = Cell[];
 export default {
     components: { OnLongPress },
     setup() {
-        const longPressPlay = useAudio(longPress);
-        const winPlay = useAudio(win);
+        const longPressPlay = useAudio("/sfx/long-press.wav");
+        const winPlay = useAudio("/sfx/win.wav");
 
         const table = ref<Row[]>([]);
         const x = useLocalStorage("x", 4);
